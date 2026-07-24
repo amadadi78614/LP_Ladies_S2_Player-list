@@ -35,7 +35,7 @@
         tr:hover { background-color: #f9f9f9; }
         
         .rank { font-weight: bold; color: #7f8c8d; width: 35px; }
-        .name-col { font-weight: 500; font-size: 14px; }
+        .name-col { font-weight: 500; font-size: 14px; color: #2c3e50; }
         .score-col { color: #8e44ad; font-weight: bold; }
         .exp-yes { color: #2980b9; font-weight: bold; font-size: 11px; }
         .exp-no { color: #95a5a6; font-size: 11px; }
@@ -249,7 +249,6 @@
             }
         });
         
-        // Ensure locked players use their assigned price
         getLockedPlayers().forEach(p => {
             if (!p.priceEdited) {
                 p.price = p.excel_base;
@@ -279,17 +278,15 @@
                 player.priceEdited = false;
                 player.tierEdited = false;
             } else if (field === 'moveToAuction') {
-                // Move from Locked to Auction Pool
                 player.role = 'Player';
                 player.retained = 'Not Retained';
                 player.team = 'Unassigned';
                 player.priceEdited = false;
                 player.tierEdited = false;
             } else if (field === 'moveToLocked') {
-                // Move from Auction to Locked
                 player.role = 'Player';
                 player.retained = 'Retained';
-                player.team = value; // Team selected
+                player.team = value;
             } else {
                 player[field] = value;
             }
@@ -403,7 +400,7 @@
 
             tr.innerHTML = `
                 <td class="rank">${index + 1}</td>
-                <td class="name-col"><input type="text" style="width:130px; font-weight:500;" value="${p.name}" onblur="updateData(${p.id}, 'name', this.value)"></td>
+                <td class="name-col">${p.name}</td>
                 <td class="pot-container">
                     <select class="pot-select ${potClass}" onchange="updateData(${p.id}, 'tierValue', this.value)">
                         ${tierOptionsHTML}
@@ -473,7 +470,7 @@
             `;
 
             tr.innerHTML = `
-                <td class="name-col"><input type="text" style="width:160px; font-weight:500;" value="${p.name}" onblur="updateData(${p.id}, 'name', this.value)"></td>
+                <td class="name-col">${p.name}</td>
                 <td>
                     <select class="select-small" onchange="updateData(${p.id}, 'team', this.value)">
                         ${teamOptionsHTML}

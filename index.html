@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S2 Ladies Franchise League - Draft Manager Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background: #f4f7f6; color: #333; }
+        .container { max-width: 1550px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-top: 0; text-align: center; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .team-card { background: #2c3e50; color: white; padding: 15px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+        .team-card h3 { margin: 0 0 5px 0; font-size: 18px; color: #ecf0f1; text-transform: uppercase; letter-spacing: 1px; }
+        .team-card .budget { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .team-card .count { font-size: 13px; color: #bdc3c7; margin-bottom: 12px; }
+        .locked-list { text-align: left; font-size: 12px; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+        .locked-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .locked-item:last-child { margin-bottom: 0; }
+        .locked-name { color: #ecf0f1; }
+        .locked-price { color: #e74c3c; font-weight: bold; }
+
+        .controls { background: #ecf0f1; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+        .controls-left select { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .export-btn { color: white; border: none; padding: 10px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px;}
+        .csv-btn { background-color: #27ae60; } .csv-btn:hover { background-color: #219150; }
+        .pdf-btn { background-color: #e74c3c; margin-left: 10px; } .pdf-btn:hover { background-color: #c0392b; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        th { background-color: #34495e; color: white; cursor: pointer; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        .rank { font-weight: bold; color: #7f8c8d; width: 35px; }
+        .name-col { font-weight: 500; font-size: 14px; }
+        .price-col { color: #27ae60; font-weight: bold; font-size: 14px; }
+        .score-col { color: #8e44ad; font-weight: bold; }
+        .exp-yes { color: #2980b9; font-weight: bold; font-size: 11px; }
+        .exp-no { color: #95a5a6; font-size: 11px; }
+        .tier-badge { display: inline-block; padding: 3px 6px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #eee; color: #555; }
+        
+        .pot-container { width: 65px; }
+        .pot-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; text-align: center; width: 100%; box-sizing: border-box; }
+        
+        /* Pot Select styling to mimic a badge */
+        .pot-select { color: white; border: none; font-weight: bold; text-align: center; padding: 4px 0; border-radius: 4px; width: 65px; cursor: pointer; font-size: 11px; outline: none; appearance: none; -webkit-appearance: none; }
+        .pot-select option { background-color: white; color: black; font-weight: normal; }
+        
+        .pot-Locked { background-color: #2c3e50; } 
+        .pot-1 { background-color: #e74c3c; } .pot-2 { background-color: #e67e22; } .pot-3 { background-color: #f39c12; }
+        .pot-4 { background-color: #f1c40f; color: #333; } .pot-5 { background-color: #2ecc71; } .pot-6 { background-color: #27ae60; }
+        .pot-7 { background-color: #1abc9c; } .pot-8 { background-color: #3498db; } .pot-9 { background-color: #2980b9; } .pot-10 { background-color: #8e44ad; }
+        
+        input[type="number"] { width: 50px; padding: 5px; border: 1px solid #bdc3c7; border-radius: 4px; text-align: center; }
+        .input-rating { width: 55px; font-weight: bold; background-color: #fcfcfa; color: #2c3e50; }
+        .input-price { width: 65px; font-weight: bold; color: #27ae60; background-color: #fcfcfa; }
+        .select-small { padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc; }
+        .select-s1 { width: 105px; }
+
+        .pdf-mode input, .pdf-mode select { border: none !important; appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background: transparent !important; padding: 0 !important; color: black !important; pointer-events: none; }
+        .pdf-mode table { font-size: 11px !important; }
+        .pdf-mode th, .pdf-mode td { padding: 5px !important; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="printableArea">
+    <h1>🏆 S2 Franchise League Auction Manager</h1>
+    
+    <div class="dashboard" id="budgetDashboard"></div>
+
+    <div class="controls" id="hideForPrint">
+        <div class="controls-left">
+            <label for="sortPriority"><strong>Prioritize Auction Pool By:</strong> </label>
+            <select id="sortPriority" onchange="renderTable()">
+                <option value="alg_score">Alg Rank / Draft Pot (Default)</option>
+                <option value="rating_desc">Highest Live Rating</option>
+                <option value="tier_desc">Match Exp Tier</option>
+                <option value="league_exp">League Experience</option>
+                <option value="price_desc">Auction Price</option>
+            </select>
+        </div>
+        <div>
+            <span style="margin-right: 15px; font-weight: bold; color: #e74c3c;">Live Auction Pool: 48 Players</span>
+            <button class="export-btn csv-btn" onclick="exportToCSV()">📥 CSV</button>
+            <button class="export-btn pdf-btn" onclick="exportToPDF()">📄 PDF</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rk</th>
+                <th>Player Name</th>
+                <th>Draft Pot</th>
+                <th>Alg Score</th>
+                <th>S1 Team</th>
+                <th>Lg Exp</th>
+                <th>Live Rating</th>
+                <th>Base Price LP</th>
+                <th>Matches</th>
+                <th>Exp Tier</th>
+                <th>Rel %</th>
+                <th>LP Rank</th>
+            </tr>
+        </thead>
+        <tbody id="rosterTable"></tbody>
+    </table>
+</div>
+
+<script>
+    const STARTING_BUDGET = 22000;
+    const OFFICIAL_TEAMS = ["Lunar Lillies", "Desert Roses", "Arctic Angels", "Backhand Blossoms", "Net Novas", "Phoenix Flames"];
+    const OFFICIAL_S1_TEAMS = ["None / New", "First time", "Arctic Angels", "Backhand Blossoms", "Desert Roses", "Lunar Lillies", "Net Novas", "Phoenix Flames"];
+
+    // Standardized prices for the 10 Tiers
+    const POT_PRICES = {1: 3500, 2: 3200, 3: 2900, 4: 2600, 5: 2300, 6: 2000, 7: 1700, 8: 1400, 9: 1100, 10: 800};
+
+    let players = [{"name": "Jeanetha Boshoff", "rating": 3.11, "s1_team": "Lunar Lillies", "age": 55, "matches": "277", "reliability": "88", "lp_rank": "High", "retained": "Retained", "role": "Player", "team": "Lunar Lillies", "id": 1}, {"name": "Sunel Grote", "rating": 2.97, "s1_team": "Backhand Blossoms", "age": 42, "matches": "155", "reliability": "80", "lp_rank": "High", "retained": "Retained", "role": "Player", "team": "Backhand Blossoms", "id": 2}, {"name": "Storme Spearpoint", "rating": 2.76, "s1_team": "First time", "age": 37, "matches": "115", "reliability": "83", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 3}, {"name": "Carien Vos", "rating": 2.4, "s1_team": "Net Novas", "age": 47, "matches": "194", "reliability": "83", "lp_rank": "High", "retained": "Not Retained", "role": "Owner", "team": "Net Novas", "id": 4}, {"name": "Terine Visagie", "rating": 2.48, "s1_team": "First time", "age": 43, "matches": "226", "reliability": "83", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 5}, {"name": "Nasreen Omar", "rating": 2.68, "s1_team": "Arctic Angels", "age": 52, "matches": "93", "reliability": "78", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 6}, {"name": "Nasreen Methar", "rating": 1.85, "s1_team": "Backhand Blossoms", "age": 65, "matches": "398", "reliability": "82", "lp_rank": "High", "retained": "Not Retained", "role": "Owner", "team": "Backhand Blossoms", "id": 7}, {"name": "Mariette Venter", "rating": 2.05, "s1_team": "First time", "age": 51, "matches": "268", "reliability": "91", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 8}, {"name": "Jana Kotze", "rating": 2.5, "s1_team": "First time", "age": 46, "matches": "29", "reliability": "66", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 9}, {"name": "Imaan Packery", "rating": 2.01, "s1_team": "Lunar Lillies", "age": 18, "matches": "95", "reliability": "83", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 10}, {"name": "Dalene Minnaar", "rating": 2.08, "s1_team": "Phoenix Flames", "age": 55, "matches": "192", "reliability": "87", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 11}, {"name": "Simone Maritz", "rating": 2.05, "s1_team": "Net Novas", "age": 34, "matches": "142", "reliability": "72", "lp_rank": "Medium", "retained": "Retained", "role": "Player", "team": "Net Novas", "id": 12}, {"name": "Samantha de Araujo", "rating": 2.0, "s1_team": "Backhand Blossoms", "age": 29, "matches": "65", "reliability": "83", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 13}, {"name": "Noerien Moolla", "rating": 1.64, "s1_team": "Desert Roses", "age": 52, "matches": "239", "reliability": "81", "lp_rank": "High", "retained": "Retained", "role": "Player", "team": "Arctic Angels", "id": 14}, {"name": "Stephanie Steenekamp", "rating": 1.89, "s1_team": "Desert Roses", "age": 33, "matches": "113", "reliability": "76", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 15}, {"name": "Anneri Duvenage", "rating": 1.27, "s1_team": "Lunar Lillies", "age": 37, "matches": "326", "reliability": "81", "lp_rank": "High", "retained": "Not Retained", "role": "Owner", "team": "Phoenix Flames", "id": 16}, {"name": "Karlien Janse van Rensburg", "rating": 1.96, "s1_team": "Phoenix Flames", "age": 41, "matches": "75", "reliability": "66", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 17}, {"name": "Michelle Wagner", "rating": 2.0, "s1_team": "First time", "age": 16, "matches": "2", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Owner", "team": "Arctic Angels", "id": 18}, {"name": "Lia Odendaal", "rating": 1.4, "s1_team": "Desert Roses", "age": 41, "matches": "223", "reliability": "82", "lp_rank": "High", "retained": "Retained", "role": "Player", "team": "Desert Roses", "id": 19}, {"name": "Tasneem Sheikh", "rating": 1.58, "s1_team": "Phoenix Flames", "age": 38, "matches": "274", "reliability": "41", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 20}, {"name": "Marise Schutte", "rating": 1.94, "s1_team": "None / New", "age": 35, "matches": "41", "reliability": "55", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 21}, {"name": "Elsa Fryer", "rating": 1.55, "s1_team": "First time", "age": 50, "matches": "255", "reliability": "91", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 22}, {"name": "hunaynah mungalee", "rating": 1.28, "s1_team": "Arctic Angels", "age": 21, "matches": "231", "reliability": "77", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 23}, {"name": "Maryke Botha", "rating": 2.09, "s1_team": "First time", "age": 42, "matches": "0", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 24}, {"name": "Emily Anders", "rating": 1.89, "s1_team": "First time", "age": 25, "matches": "6", "reliability": "20", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 25}, {"name": "Dhiya Ismail", "rating": 1.32, "s1_team": "Net Novas", "age": 21, "matches": "176", "reliability": "72", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 26}, {"name": "Mufeedah Hoosen", "rating": 1.51, "s1_team": "Desert Roses", "age": 34, "matches": "119", "reliability": "55", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 27}, {"name": "Deeja Badat", "rating": 1.3, "s1_team": "Arctic Angels", "age": 35, "matches": "201", "reliability": "66", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 28}, {"name": "Dirkie Coomans", "rating": 1.6, "s1_team": "Backhand Blossoms", "age": 38, "matches": "65", "reliability": "63", "lp_rank": "Medium", "retained": "Not Retained", "role": "Owner", "team": "Lunar Lillies", "id": 29}, {"name": "Martinette Meyer", "rating": 1.7, "s1_team": "Phoenix Flames", "age": 62, "matches": "64", "reliability": "64", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 30}, {"name": "Tanija De Villiers", "rating": 1.1, "s1_team": "Phoenix Flames", "age": 40, "matches": "120", "reliability": "79", "lp_rank": "High", "retained": "Retained", "role": "Player", "team": "Phoenix Flames", "id": 31}, {"name": "Imaan Shaik", "rating": 1.04, "s1_team": "Backhand Blossoms", "age": 21, "matches": "165", "reliability": "70", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 32}, {"name": "Helene Van der Merwe", "rating": 1.56, "s1_team": "First time", "age": 41, "matches": "23", "reliability": "43", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 33}, {"name": "Firdaus Hoosen", "rating": 1.09, "s1_team": "Desert Roses", "age": 25, "matches": "150", "reliability": "57", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 34}, {"name": "Zanell Pinker", "rating": 1.15, "s1_team": "First time", "age": 39, "matches": "104", "reliability": "71", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 35}, {"name": "Brigitte du Preez", "rating": 1.5, "s1_team": "First time", "age": 40, "matches": "18", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 36}, {"name": "Icem Wilken", "rating": 1.18, "s1_team": "Lunar Lillies", "age": 47, "matches": "123", "reliability": "72", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 37}, {"name": "Nazrana Meer", "rating": 0.92, "s1_team": "First time", "age": 19, "matches": "137", "reliability": "51", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 38}, {"name": "Michelle Human", "rating": 0.9, "s1_team": "Desert Roses", "age": 38, "matches": "139", "reliability": "67", "lp_rank": "Medium", "retained": "Not Retained", "role": "Owner", "team": "Desert Roses", "id": 39}, {"name": "Aletia Van Rooyen", "rating": 1.09, "s1_team": "Lunar Lillies", "age": 26, "matches": "15", "reliability": "28", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 40}, {"name": "Faeeza Patel", "rating": 1.0, "s1_team": "Desert Roses", "age": 25, "matches": "64", "reliability": "37", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 41}, {"name": "Mieke Swart", "rating": 1.05, "s1_team": "Net Novas", "age": 37, "matches": "38", "reliability": "20", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 42}, {"name": "Aldorette Van Der Mescht", "rating": 0.8, "s1_team": "First time", "age": 16, "matches": "19", "reliability": "27", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 43}, {"name": "Diyaana Nomani", "rating": 0.73, "s1_team": "Arctic Angels", "age": 15, "matches": "24", "reliability": "35", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 44}, {"name": "Zahra Jogi", "rating": 0.77, "s1_team": "Phoenix Flames", "age": 21, "matches": "58", "reliability": "41", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 45}, {"name": "Lana Nel", "rating": 1.0, "s1_team": "Backhand Blossoms", "age": 52, "matches": "153", "reliability": "77", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 46}, {"name": "Heleen Van Der Mescht", "rating": 1.0, "s1_team": "Lunar Lillies", "age": 56, "matches": "34", "reliability": "27", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 47}, {"name": "Lizle Tilburn", "rating": 1.25, "s1_team": "First time", "age": 54, "matches": "58", "reliability": "46", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 48}, {"name": "Fazila Hafesji", "rating": 0.88, "s1_team": "Backhand Blossoms", "age": 50, "matches": "81", "reliability": "43", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 49}, {"name": "Anje Hope", "rating": 0.83, "s1_team": "First time", "age": 51, "matches": "31", "reliability": "39", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 50}, {"name": "Gizelle Taylor", "rating": 0.69, "s1_team": "First time", "age": 40, "matches": "101", "reliability": "70", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 51}, {"name": "Maxine Lambourn", "rating": 0.78, "s1_team": "First time", "age": 51, "matches": "110", "reliability": "78", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 52}, {"name": "Larisa de Kock", "rating": 0.87, "s1_team": "First time", "age": 51, "matches": "40", "reliability": "56", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 53}, {"name": "Amor Caromba", "rating": 0.5, "s1_team": "First time", "age": 29, "matches": "1", "reliability": "0", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 54}, {"name": "Jeanine Pillay", "rating": 0.5, "s1_team": "First time", "age": 42, "matches": "14", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 55}, {"name": "Rinie De Klerk", "rating": 0.74, "s1_team": "First time", "age": 48, "matches": "25", "reliability": "60", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 56}, {"name": "Mari Jaquire", "rating": 0.5, "s1_team": "Desert Roses", "age": 56, "matches": "1", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 57}, {"name": "Miané Swart", "rating": 0.0, "s1_team": "First time", "age": 13, "matches": "1", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 58}, {"name": "Marz Asvat", "rating": 0.0, "s1_team": "Arctic Angels", "age": 15, "matches": "12", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 59}, {"name": "Annelle Whyte", "rating": 0.0, "s1_team": "First time", "age": 45, "matches": "3", "reliability": "15", "lp_rank": "Medium", "retained": "Not Retained", "role": "Player", "team": "Unassigned", "id": 60}];
+
+    // Filters for separate pools
+    function getAuctionPlayers() { return players.filter(p => p.role !== 'Owner' && p.retained !== 'Retained'); }
+    function getLockedPlayers() { return players.filter(p => p.role === 'Owner' || p.retained === 'Retained'); }
+
+    function checkLeagueExp(s1_team) {
+        return (s1_team !== "First time" && s1_team !== "None / New");
+    }
+
+    function getMatchTier(matches) {
+        if (matches === "" || matches === null || isNaN(matches)) return { label: "0-50", val: 1 };
+        let m = parseFloat(matches);
+        if (m <= 50) return { label: "0-50", val: 1 };
+        if (m <= 100) return { label: "51-100", val: 2 };
+        if (m <= 150) return { label: "101-150", val: 3 };
+        if (m <= 200) return { label: "151-200", val: 4 };
+        return { label: "200+", val: 5 };
+    }
+
+    // Advanced Alg Score Generator
+    function calculatePowerScore(p) {
+        let m = p.matches !== "" ? parseFloat(p.matches) : 0;
+        let r = p.reliability !== "" ? parseFloat(p.reliability) : 0;
+        let score = p.rating * 1000; 
+        
+        score += (m * 2); 
+        score += (r * 3); 
+        
+        let ageModifier = 0;
+        if (p.age < 50) { ageModifier = (50 - p.age) * 10; } 
+        else if (p.age >= 60) { ageModifier = (60 - p.age) * 25; } 
+        score += ageModifier;
+        
+        if (p.lp_rank === "High") score += 200;
+        if (p.lp_rank === "Low") score -= 200;
+        return Math.round(score);
+    }
+    
+    // Ranks ALL 60 players together to determine their Tier Value
+    function refreshScoresAndPots() {
+        players.forEach(p => { p.alg_score = calculatePowerScore(p); });
+        
+        let allPlayers = [...players].sort((a, b) => b.alg_score - a.alg_score);
+
+        allPlayers.forEach((p, index) => {
+            let autoPotNumber = Math.floor(index / 6) + 1; // 1 to 10
+            let mainPlayer = players.find(x => x.id === p.id);
+            
+            if(mainPlayer) {
+                // If user hasn't manually edited the Pot, assign the calculated one
+                if (!mainPlayer.potEdited) {
+                    mainPlayer.potValue = autoPotNumber;
+                }
+                
+                // Visual Pot Display
+                if (mainPlayer.role === 'Owner' || mainPlayer.retained === 'Retained') {
+                    mainPlayer.pot = "Locked";
+                } else {
+                    mainPlayer.pot = mainPlayer.potValue;
+                }
+
+                // Apply Standard Pricing unless manually edited
+                if (!mainPlayer.priceEdited) {
+                    mainPlayer.price = POT_PRICES[mainPlayer.potValue] || 800;
+                }
+            }
+        });
+    }
+
+    function updateData(id, field, value) {
+        let player = players.find(p => p.id === id);
+        if (player) {
+            if (field === 'rating') {
+                player.rating = value === "" ? 0 : parseFloat(value);
+                player.priceEdited = false; // Reset to let algorithm pick new standard price
+                player.potEdited = false; // Reset pot algorithm
+            } else if (field === 'price') {
+                player.price = value === "" ? 0 : parseInt(value, 10);
+                player.priceEdited = true; // Lock in manual price edit
+            } else if (field === 'potValue') {
+                player.potValue = parseInt(value, 10);
+                player.potEdited = true; // Lock in manual pot selection
+                if (!player.priceEdited) {
+                    player.price = POT_PRICES[player.potValue] || 800; // Auto-update price to match new pot
+                }
+            } else if (field === 'matches' || field === 'reliability') {
+                player[field] = value === "" ? "" : parseFloat(value);
+                player.priceEdited = false; 
+                player.potEdited = false;
+            } else {
+                player[field] = value;
+            }
+            renderTable();
+        }
+    }
+
+    function sortPlayers(auctionOnly) {
+        const sortType = document.getElementById("sortPriority").value;
+        const getVal = (val, isAsc) => val === "" ? (isAsc ? 999999 : -1) : val;
+
+        auctionOnly.sort((a, b) => {
+            if (sortType === "alg_score") return b.alg_score - a.alg_score;
+            if (sortType === "rating_desc") return b.rating - a.rating;
+            if (sortType === "price_desc") return b.price - a.price;
+            
+            if (sortType === "tier_desc") {
+                let tierA = getMatchTier(a.matches).val;
+                let tierB = getMatchTier(b.matches).val;
+                if (tierA !== tierB) return tierB - tierA; 
+                return b.rating - a.rating; 
+            }
+
+            if (sortType === "league_exp") {
+                let expA = checkLeagueExp(a.s1_team) ? 1 : 0;
+                let expB = checkLeagueExp(b.s1_team) ? 1 : 0;
+                if (expA !== expB) return expB - expA;
+                return b.rating - a.rating; 
+            }
+            return 0;
+        });
+    }
+    
+    function updateDashboard() {
+        let dashHTML = "";
+        let lockedPlayers = getLockedPlayers();
+
+        OFFICIAL_TEAMS.forEach(team => {
+            let teamLocked = lockedPlayers.filter(p => p.team === team);
+            let totalSpent = 0;
+            let lockedHTML = `<div class="locked-list">`;
+            
+            if (teamLocked.length > 0) {
+                teamLocked.forEach(p => {
+                    totalSpent += p.price;
+                    let roleIcon = p.role === 'Owner' ? '👑 Owner' : '🔒 Retained';
+                    lockedHTML += `
+                        <div class="locked-item">
+                            <span class="locked-name">${roleIcon}: ${p.name} (Tier ${p.potValue})</span>
+                            <span class="locked-price">-${p.price.toLocaleString()} LP</span>
+                        </div>`;
+                });
+            } else {
+                lockedHTML += `<div style="text-align:center; color:#95a5a6; font-style:italic;">No locked players</div>`;
+            }
+            lockedHTML += `</div>`;
+            
+            let count = teamLocked.length; 
+            let remaining = STARTING_BUDGET - totalSpent;
+            
+            dashHTML += `
+                <div class="team-card">
+                    <div>
+                        <h3>${team}</h3>
+                        <div class="budget" style="color: ${remaining < 0 ? '#e74c3c' : '#2ecc71'}">${remaining.toLocaleString()} LP</div>
+                        <div class="count">${count} Locked (Needs ${10 - count} Auction Picks)</div>
+                    </div>
+                    ${lockedHTML}
+                </div>
+            `;
+        });
+        document.getElementById('budgetDashboard').innerHTML = dashHTML;
+    }
+
+    function renderTable() {
+        refreshScoresAndPots();
+        
+        let displayList = getAuctionPlayers();
+        sortPlayers(displayList);
+        
+        updateDashboard();
+        
+        const tbody = document.getElementById('rosterTable');
+        tbody.innerHTML = '';
+        
+        displayList.forEach((p, index) => {
+            let tr = document.createElement('tr');
+            
+            let hasExp = checkLeagueExp(p.s1_team);
+            let expHtml = hasExp ? '<span class="exp-yes">✅ Yes</span>' : '<span class="exp-no">❌ No</span>';
+            let matchTier = getMatchTier(p.matches).label;
+            
+            let potClass = `pot-${p.potValue}`;
+
+            let s1OptionsHtml = '';
+            OFFICIAL_S1_TEAMS.forEach(t => {
+                let isSelected = (p.s1_team === t);
+                s1OptionsHtml += `<option value="${t}" ${isSelected ? 'selected' : ''}>${t}</option>`;
+            });
+            
+            let potOptionsHTML = '';
+            for(let i=1; i<=10; i++) {
+                potOptionsHTML += `<option value="${i}" ${p.potValue === i ? 'selected' : ''}>Pot ${i}</option>`;
+            }
+
+            tr.innerHTML = `
+                <td class="rank">${index + 1}</td>
+                <td class="name-col">${p.name}</td>
+                <td class="pot-container">
+                    <select class="pot-select ${potClass}" onchange="updateData(${p.id}, 'potValue', this.value)">
+                        ${potOptionsHTML}
+                    </select>
+                </td>
+                <td class="score-col">${p.alg_score}</td>
+                <td>
+                    <select class="select-small select-s1" onchange="updateData(${p.id}, 's1_team', this.value)">
+                        ${s1OptionsHtml}
+                    </select>
+                </td>
+                <td>${expHtml}</td>
+                <td>
+                    <input type="number" step="0.01" min="0" max="10" placeholder="0.00" 
+                           class="input-rating"
+                           value="${p.rating.toFixed(2)}" 
+                           onblur="updateData(${p.id}, 'rating', this.value)">
+                </td>
+                <td>
+                    <input type="number" min="0" step="50" class="input-price" 
+                           value="${p.price}" 
+                           onblur="updateData(${p.id}, 'price', this.value)">
+                </td>
+                <td>
+                    <input type="number" min="0" placeholder="0" 
+                           value="${p.matches !== "" ? p.matches : ''}" 
+                           onblur="updateData(${p.id}, 'matches', this.value)">
+                </td>
+                <td><span class="tier-badge">${matchTier}</span></td>
+                <td>
+                    <input type="number" min="0" max="100" placeholder="0%" 
+                           value="${p.reliability !== "" ? p.reliability : ''}" 
+                           onblur="updateData(${p.id}, 'reliability', this.value)">
+                </td>
+                <td>
+                    <select class="select-small" onchange="updateData(${p.id}, 'lp_rank', this.value)">
+                        <option value="High" ${p.lp_rank === 'High' ? 'selected' : ''}>High</option>
+                        <option value="Medium" ${p.lp_rank === 'Medium' ? 'selected' : ''}>Medium</option>
+                        <option value="Low" ${p.lp_rank === 'Low' ? 'selected' : ''}>Low</option>
+                    </select>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function exportToCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Type,Alg Rank,Player Name,Draft Pot,S1 Team,League Exp,Live Rating,Base Price (LP),Alg Score,Matches,Match Tier,Reliability %,LP Rank,Role,Retained\n";
+        
+        let allExport = [...players];
+        allExport.sort((a, b) => b.alg_score - a.alg_score);
+        
+        allExport.forEach((p, index) => {
+            let isLocked = (p.role === 'Owner' || p.retained === 'Retained');
+            let typeLabel = isLocked ? "LOCKED" : "AUCTION";
+            let exp = checkLeagueExp(p.s1_team) ? "Yes" : "No";
+            let tier = getMatchTier(p.matches).label;
+            let m = p.matches !== "" ? p.matches : 0;
+            let r = p.reliability !== "" ? p.reliability : 0;
+            let potLabel = p.pot === "Locked" ? `Locked (Pot ${p.potValue})` : `Pot ${p.potValue}`;
+            
+            let row = `"${typeLabel}",${index + 1},"${p.name}","${potLabel}","${p.s1_team}","${exp}",${p.rating.toFixed(2)},${p.price},${p.alg_score},${m},"${tier}",${r},"${p.lp_rank}","${p.role}","${p.retained}"`;
+            csvContent += row + "\n";
+        });
+
+        let encodedUri = encodeURI(csvContent);
+        let link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "S2_Draft_Roster_Final.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function exportToPDF() {
+        const container = document.getElementById('printableArea');
+        container.classList.add('pdf-mode');
+        document.getElementById('hideForPrint').style.display = 'none';
+
+        const opt = {
+            margin:       0.3,
+            filename:     'S2_Draft_Roster.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'a3', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(container).save().then(() => {
+            document.getElementById('hideForPrint').style.display = 'flex';
+            container.classList.remove('pdf-mode');
+        });
+    }
+
+    renderTable();
+</script>
+
+</body>
+</html>
